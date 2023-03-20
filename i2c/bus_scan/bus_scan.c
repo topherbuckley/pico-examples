@@ -25,8 +25,9 @@
 #include "pico/binary_info.h"
 #include "hardware/i2c.h"
 
-#define ROBOT_I2C_SDA_PIN 0
-#define ROBOT_I2C_SCL_PIN 1
+#define ROBOT_I2C_SDA_PIN 2
+#define ROBOT_I2C_SCL_PIN 3
+#define i2cbus i2c1
 
 // I2C reserves some addresses for special purposes. We exclude these from the scan.
 // These are any addresses of the form 000 0xxx or 111 1xxx
@@ -34,16 +35,29 @@ bool reserved_addr(uint8_t addr) {
     return (addr & 0x78) == 0 || (addr & 0x78) == 0x78;
 }
 
+void bus_scan();
+
 int main() {
     // Enable UART so we can print status output
+    printf("\n1\n");
     stdio_init_all();
-    i2c_init(i2c_default, 100 * 1000);
+    printf("\n2\n");
+    i2c_init(i2cbus, 100 * 1000);
+    printf("\n3\n");
     gpio_set_function(ROBOT_I2C_SDA_PIN, GPIO_FUNC_I2C);
     gpio_set_function(ROBOT_I2C_SCL_PIN, GPIO_FUNC_I2C);
     gpio_pull_up(ROBOT_I2C_SDA_PIN);
     gpio_pull_up(ROBOT_I2C_SCL_PIN);
     // Make the I2C pins available to picotool
     bi_decl(bi_2pins_with_func(ROBOT_I2C_SDA_PIN, ROBOT_I2C_SCL_PIN, GPIO_FUNC_I2C));
+    while (true){
+        bus_scan();
+	printf("Waiting...\n");
+        sleep_ms(1000);	
+    }
+}
+
+void bus_scan(){
 
     printf("\nI2C Bus Scan\n");
     printf("   0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F\n");
@@ -64,12 +78,10 @@ int main() {
         if (reserved_addr(addr))
             ret = PICO_ERROR_GENERIC;
         else
-            ret = i2c_read_blocking(i2c_default, addr, &rxdata, 1, false);
+            ret = i2c_read_blocking(i2cbus, addr, &rxdata, 1, false);
 
         printf(ret < 0 ? "." : "@");
         printf(addr % 16 == 15 ? "\n" : "  ");
     }
     printf("Done.\n");
-    return 0;
-#endif
 }
