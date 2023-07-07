@@ -78,7 +78,8 @@ int main() {
 
     multicore_launch_core1(core1_entry);
 
-    queue_entry_t entry = {&factorial, TEST_NUM};
+    queue_entry_t bad_entry = {&factorial, TEST_NUM};
+    queue_entry_t entry = {&bad_entry, TEST_NUM};
     queue_add_blocking(&call_queue, &entry);
 
     // We could now do a load of stuff on core 0 and get our result later
